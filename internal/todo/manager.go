@@ -19,8 +19,8 @@ func (m *Manager) Tasks() []Task {
 	return m.tasks
 }
 
-// AddTask добавляет новую зщадачу в список задач
-func (m *Manager) AddTask(description string) Task {
+// Add добавляет новую зщадачу в список задач
+func (m *Manager) Add(description string) Task {
 	t := Task{
 		ID:          m.nextID(),
 		Description: description,
@@ -41,8 +41,8 @@ func (m *Manager) nextID() int {
 	return maxID + 1
 }
 
-// ListTasks возвращает задачи по фильтру: все (all), выполненные (done), ожидание(pending)
-func (m *Manager) ListTasks(filter string) []Task {
+// List возвращает задачи по фильтру: все (all), выполненные (done), ожидание(pending)
+func (m *Manager) List(filter string) []Task {
 	switch filter {
 	case "done":
 		output := []Task{}
@@ -65,8 +65,8 @@ func (m *Manager) ListTasks(filter string) []Task {
 	}
 }
 
-// CompleteTask помечает задачу выполненной
-func (m *Manager) CompleteTask(id int) error {
+// Complete помечает задачу выполненной
+func (m *Manager) Complete(id int) error {
 	for i := range m.tasks {
 		// обращаемся к элементу слайса по его индексу; t.Done - было бы ошибкой, тк t - это КОПИЯ элемента слайса
 		if m.tasks[i].ID == id {
@@ -77,8 +77,8 @@ func (m *Manager) CompleteTask(id int) error {
 	return fmt.Errorf("task с id %d не найдена", id)
 }
 
-// DeleteTask удаляет задачу
-func (m *Manager) DeleteTask(id int) error {
+// Delete удаляет задачу
+func (m *Manager) Delete(id int) error {
 	for i, t := range m.tasks {
 		if t.ID == id {
 			m.tasks = append(m.tasks[:i], m.tasks[i+1:]...)

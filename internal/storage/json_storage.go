@@ -32,5 +32,5 @@ func SaveJSON(path string, tasks []todo.Task) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 644)
+	return os.WriteFile(path, data, 0644)
 }
