@@ -9,14 +9,21 @@ type Manager struct {
 	tasks []Task
 }
 
-// Создает экземпляр структуры
+// NewManager создает экземпляр структуры. Входной срез копируется:
+// последующие изменения переданного среза не влияют на менеджер,
+// а изменения менеджера — на исходный срез.
 func NewManager(tasks []Task) *Manager {
-	return &Manager{tasks: tasks}
+	tasksCopy := make([]Task, len(tasks))
+	copy(tasksCopy, tasks)
+	return &Manager{tasks: tasksCopy}
 }
 
-// Возвращает список задач
+// Tasks возвращает копию списка задач. Возвращается независимый срез:
+// изменения в нём не влияют на состояние Manager.
 func (m *Manager) Tasks() []Task {
-	return m.tasks
+	tasksCopy := make([]Task, len(m.tasks))
+	copy(tasksCopy, m.tasks)
+	return tasksCopy
 }
 
 // Add добавляет новую зщадачу в список задач

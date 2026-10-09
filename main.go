@@ -33,7 +33,7 @@ func main() {
 	case "load":
 		cmdLoad(os.Args[2:])
 	default:
-		fmt.Printf("неизвестная команда %s\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "неизвестная команда %s\n", os.Args[1])
 		usage()
 		os.Exit(1)
 	}
@@ -43,15 +43,16 @@ func cmdAdd(args []string) {
 	fs := flag.NewFlagSet("add", flag.ExitOnError)
 	desc := fs.String("desc", "", "task description")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
-	if *desc == "" {
-		fmt.Println("error: --desc is required")
+	if strings.TrimSpace(*desc) == "" {
+		fmt.Fprintln(os.Stderr, "error: --desc is required")
 		os.Exit(1)
 	}
 
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -59,7 +60,7 @@ func cmdAdd(args []string) {
 	task := mgr.Add(*desc)
 
 	if err := storage.SaveJSON(tasksFile, mgr.Tasks()); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -70,6 +71,7 @@ func cmdList(args []string) {
 	fs := flag.NewFlagSet("list", flag.ExitOnError)
 	filter := fs.String("filter", "all", "filter: all, done, pending")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
 	switch *filter {
 	case "all", "done", "pending":
@@ -80,7 +82,7 @@ func cmdList(args []string) {
 
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -104,26 +106,27 @@ func cmdComplete(args []string) {
 	fs := flag.NewFlagSet("complete", flag.ExitOnError)
 	id := fs.Int("id", 0, "task id")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
 	if *id <= 0 {
-		fmt.Println("error: --id must be a positive number")
+		fmt.Fprintln(os.Stderr, "error: --id must be a positive number")
 		os.Exit(1)
 	}
 
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
 	mgr := todo.NewManager(tasks)
 	if err := mgr.Complete(*id); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
 	if err := storage.SaveJSON(tasksFile, mgr.Tasks()); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -134,26 +137,27 @@ func cmdDelete(args []string) {
 	fs := flag.NewFlagSet("delete", flag.ExitOnError)
 	id := fs.Int("id", 0, "task id")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
 	if *id <= 0 {
-		fmt.Println("error: --id must be a positive number")
+		fmt.Fprintln(os.Stderr, "error: --id must be a positive number")
 		os.Exit(1)
 	}
 
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
 	mgr := todo.NewManager(tasks)
 	if err := mgr.Delete(*id); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
 	if err := storage.SaveJSON(tasksFile, mgr.Tasks()); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -165,20 +169,21 @@ func cmdExport(args []string) {
 	format := fs.String("format", "json", "output format: csv or json")
 	out := fs.String("out", "", "output file path")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
 	if *out == "" {
-		fmt.Println("error: --out is required")
+		fmt.Fprintln(os.Stderr, "error: --out is required")
 		os.Exit(1)
 	}
 
 	if isSamePath(*out, tasksFile) {
-		fmt.Printf("error: экспорт в основной файл данных %s запрещен\n", tasksFile)
+		fmt.Fprintf(os.Stderr, "error: экспорт в основной файл данных %s запрещен\n", tasksFile)
 		os.Exit(1)
 	}
 
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -188,11 +193,11 @@ func cmdExport(args []string) {
 	case "json":
 		err = storage.SaveJSON(*out, tasks)
 	default:
-		fmt.Printf("error: unknown format %q (use csv or json)\n", *format)
+		fmt.Fprintf(os.Stderr, "error: unknown format %q (use csv or json)\n", *format)
 		os.Exit(1)
 	}
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -203,9 +208,10 @@ func cmdLoad(args []string) {
 	fs := flag.NewFlagSet("load", flag.ExitOnError)
 	file := fs.String("file", "", "file to import (csv or json)")
 	fs.Parse(args)
+	checkExtraArgs(fs)
 
 	if *file == "" {
-		fmt.Println("error: --file is required")
+		fmt.Fprintln(os.Stderr, "error: --file is required")
 		os.Exit(1)
 	}
 
@@ -226,7 +232,7 @@ func cmdLoad(args []string) {
 	}
 
 	if err := storage.SaveJSON(tasksFile, tasks); err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -234,8 +240,17 @@ func cmdLoad(args []string) {
 }
 
 func usage() {
-	fmt.Println("usage: todo <command> [flags]")
-	fmt.Println("commands: add, list, complete, delete, export, load")
+	fmt.Fprintln(os.Stderr, "usage: todo <command> [flags]")
+	fmt.Fprintln(os.Stderr, "commands: add, list, complete, delete, export, load")
+}
+
+// checkExtraArgs завершает программу с ошибкой, если после разбора флагов
+// остались непредвиденные позиционные аргументы
+func checkExtraArgs(fs *flag.FlagSet) {
+	if fs.NArg() > 0 {
+		fmt.Fprintf(os.Stderr, "error: неизвестные аргументы: %s\n", strings.Join(fs.Args(), " "))
+		os.Exit(1)
+	}
 }
 
 // isSamePath сравнивает два пути по абсолютным нормализованным значениям
