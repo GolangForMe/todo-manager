@@ -83,5 +83,8 @@ func LoadCSVImport(path string) ([]todo.Task, error) {
 			Done:        done,
 		})
 	}
+	if err := todo.ValidateTasks(tasks); err != nil {
+		return nil, fmt.Errorf("некорректные данные в %q: %w", path, err)
+	}
 	return tasks, nil
 }

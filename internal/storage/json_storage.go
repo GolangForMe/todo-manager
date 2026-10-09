@@ -26,6 +26,9 @@ func LoadJSON(path string) ([]todo.Task, error) {
 	if err := json.Unmarshal(data, &tasks); err != nil {
 		return nil, err
 	}
+	if tasks == nil {
+		tasks = []todo.Task{} // JSON null → пустой список, чтобы при сохранении записывался массив, а не null
+	}
 	return tasks, nil
 }
 
@@ -42,6 +45,12 @@ func LoadJSONImport(path string) ([]todo.Task, error) {
 	var tasks []todo.Task
 	if err := json.Unmarshal(data, &tasks); err != nil {
 		return nil, fmt.Errorf("не удалось разобрать JSON из %q: %w", path, err)
+	}
+	if tasks == nil {
+		tasks = []todo.Task{} // JSON null → пустой список, чтобы при сохранении записывался массив, а не null
+	}
+	if err := todo.ValidateTasks(tasks); err != nil {
+		return nil, fmt.Errorf("некорректные данные в %q: %w", path, err)
 	}
 	return tasks, nil
 }

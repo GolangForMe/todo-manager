@@ -71,6 +71,13 @@ func cmdList(args []string) {
 	filter := fs.String("filter", "all", "filter: all, done, pending")
 	fs.Parse(args)
 
+	switch *filter {
+	case "all", "done", "pending":
+	default:
+		fmt.Fprintf(os.Stderr, "error: неизвестный фильтр %q: допустимые значения: all, done, pending\n", *filter)
+		os.Exit(1)
+	}
+
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -204,10 +211,14 @@ func cmdLoad(args []string) {
 
 	var tasks []todo.Task
 	var err error
-	if strings.HasSuffix(*file, ".csv") {
-		tasks, err = storage.LoadCSVImport(*file)
-	} else {
+	switch strings.ToLower(filepath.Ext(*file)) {
+	case ".json":
 		tasks, err = storage.LoadJSONImport(*file)
+	case ".csv":
+		tasks, err = storage.LoadCSVImport(*file)
+	default:
+		fmt.Fprintf(os.Stderr, "error: неподдерживаемый формат файла %q: допустимы .json и .csv\n", *file)
+		os.Exit(1)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
@@ -219,7 +230,7 @@ func cmdLoad(args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("loaded %d tasks from %s\n", len(tasks), *file)
+	fmt.Printf("загружено %d задач из %s, существующие задачи заменены\n", len(tasks), *file)
 }
 
 func usage() {
