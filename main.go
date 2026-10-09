@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gearmobile/todo-manager/internal/storage"
@@ -163,6 +164,11 @@ func cmdExport(args []string) {
 		os.Exit(1)
 	}
 
+	if isSamePath(*out, tasksFile) {
+		fmt.Printf("error: экспорт в основной файл данных %s запрещен\n", tasksFile)
+		os.Exit(1)
+	}
+
 	tasks, err := storage.LoadJSON(tasksFile)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -199,12 +205,12 @@ func cmdLoad(args []string) {
 	var tasks []todo.Task
 	var err error
 	if strings.HasSuffix(*file, ".csv") {
-		tasks, err = storage.LoadCSV(*file)
+		tasks, err = storage.LoadCSVImport(*file)
 	} else {
-		tasks, err = storage.LoadJSON(*file)
+		tasks, err = storage.LoadJSONImport(*file)
 	}
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 
@@ -219,4 +225,17 @@ func cmdLoad(args []string) {
 func usage() {
 	fmt.Println("usage: todo <command> [flags]")
 	fmt.Println("commands: add, list, complete, delete, export, load")
+}
+
+// isSamePath сравнивает два пути по абсолютным нормализованным значениям
+func isSamePath(a, b string) bool {
+	absA, err := filepath.Abs(a)
+	if err != nil {
+		return false
+	}
+	absB, err := filepath.Abs(b)
+	if err != nil {
+		return false
+	}
+	return filepath.Clean(absA) == filepath.Clean(absB)
 }
